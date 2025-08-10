@@ -11,11 +11,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+
 import org.example.diplom.entity.FileInfo;
 import org.example.diplom.entity.FileMessage;
 import org.example.diplom.exception.BadCredentials;
+import org.example.diplom.exception.NotFoundData;
 import org.example.diplom.exception.ServerError;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -51,7 +52,7 @@ public class FilesStorageServiceImpl implements FilesStorageService {
             Files.copy(file.getInputStream(), this.root.resolve(subfolderName).resolve(fullFileName));
         } catch (Exception e) {
             if (e instanceof FileAlreadyExistsException) {
-                throw new BadCredentials("A file of that name already exists.");
+                throw new BadCredentials(String.format("A file with name '%s' already exists.", fileName));
             }
             throw new ServerError(e.getMessage());
         }
@@ -67,7 +68,7 @@ public class FilesStorageServiceImpl implements FilesStorageService {
                 file = Files.readAllBytes(filePath);
                 hash = String.valueOf(filePath.toFile().hashCode());
             } else {
-                throw new BadCredentials("File not found: %" + filename);
+                throw new NotFoundData("File not found: " + filename);
             }
         } catch (IOException e) {
             throw new ServerError(e.getMessage());
@@ -82,7 +83,7 @@ public class FilesStorageServiceImpl implements FilesStorageService {
             if (Files.exists(file)) {
                 Files.deleteIfExists(file);
             } else {
-                throw new BadCredentials("File does not exists");
+                throw new NotFoundData("File not found: " + filename);
             }
         } catch (IOException e) {
             throw new ServerError(e.getMessage());
@@ -94,7 +95,6 @@ public class FilesStorageServiceImpl implements FilesStorageService {
         Stream<Path> stream;
         List<FileInfo> files;
         if(!Files.exists(this.root.resolve(subfolderName))) {
-            //throw new BadCredentials("U haven't uploaded files yet");
             return new ArrayList<>();
         }
         try {
@@ -128,7 +128,7 @@ public class FilesStorageServiceImpl implements FilesStorageService {
                 String[] fileNameSplit = filename.split("\\.");
                 Files.move(file, file.resolveSibling(String.format("%s.%s", newFileName, fileNameSplit[fileNameSplit.length - 1])));
             } else {
-                throw new BadCredentials("No such file, nothing to rename");
+                throw new NotFoundData("File not found: " + filename);
             }
         } catch (IOException e) {
             throw new ServerError("Error: " + e.getMessage());

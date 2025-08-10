@@ -19,7 +19,8 @@ public class UserService {
     public User getUserByLogin(String login) {
         User user = userRepository.findByLogin(login);
         if (user == null) {
-            throw new NotFoundData(String.format("User with login %s not found", login));
+            String message = String.format("User with login %s not found", login);
+            throw new NotFoundData(message);
         }
         return user;
     }
